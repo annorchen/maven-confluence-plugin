@@ -306,12 +306,14 @@ public abstract class AbstractConfluenceMojo extends AbstractBaseConfluenceMojo 
 
 				final Model.Page pageToUpdate = result;
 
+				final String baseDir = source.getPath();
+				
 				result = Site.processUri(source, this.getTitle(), new Func2<InputStream, Storage.Representation, Model.Page>() {
 					@Override
 					public Model.Page call(InputStream is, Representation r) {
 
 						try {
-							final MiniTemplator t = new MiniTemplator.Builder().setSkipUndefinedVars(true).build(is, getCharset());
+							final MiniTemplator t = new MiniTemplator.Builder().setSkipUndefinedVars(true).build(baseDir, is, getCharset());
 
 							if (!child.isIgnoreVariables()) {
 

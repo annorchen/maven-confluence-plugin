@@ -1,6 +1,7 @@
 package org.bsc.maven.confluence.plugin;
 
 import static java.lang.String.format;
+import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.StringWriter;
@@ -307,14 +308,15 @@ public class ConfluenceDeployMojo extends AbstractConfluenceSiteMojo {
     protected String createProjectHome( final Site site, final Locale locale)  {
 
         try {
-            
+        	final String baseDir = (new File(site.getHome().getUri().getPath())).getParent();
+        	
             return Site.processUri(site.getHome().getUri(), this.getTitle(), new Func2<InputStream, Representation, String>() {
                 @Override
                 public String call(InputStream is, Representation r) {
                     try {
                         final MiniTemplator t = new MiniTemplator.Builder()
                                 .setSkipUndefinedVars(true)
-                                .build( is, getCharset() );
+                                .build(baseDir, is, getCharset() );
 
                         generateProjectHomeTemplate( t, site, locale );
 
@@ -846,7 +848,7 @@ public class ConfluenceDeployMojo extends AbstractConfluenceSiteMojo {
         getProperties().put("pageTitle",    title);
         getProperties().put("artifactId",   getProject().getArtifactId());
         getProperties().put("version",      getProject().getVersion());
-
+        final String baseDir = (new File(site.getHome().getUri().getPath())).getParent();
         return Site.processUri(site.getHome().getUri(), getTitle(), new Func2<java.io.InputStream,Storage.Representation,Model.Page>() {
 
             @Override
@@ -855,7 +857,7 @@ public class ConfluenceDeployMojo extends AbstractConfluenceSiteMojo {
                 try {
                     final MiniTemplator t = new MiniTemplator.Builder()
                             .setSkipUndefinedVars(true)
-                            .build( is, getCharset() );
+                            .build(baseDir, is, getCharset() );
 
                     Model.Page page = confluence.getOrCreatePage(parentPage, title);
 
