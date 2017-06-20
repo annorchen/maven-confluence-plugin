@@ -86,6 +86,23 @@ public abstract class AbstractConfluenceMojo extends AbstractBaseConfluenceMojo 
 
 	@Parameter(alias = "title", property = "project.build.finalName", required = false)
 	private String title;
+	
+	
+	/**
+	 * Confluence support only unit page title under one space. We need a shortname to concat with title.
+	 * 
+	 */
+	@Parameter(alias = "projectShortName", property = "confluence.projectShortName", required = true)
+	private String projectShortName;
+
+	
+	public String getProjectShortName() {
+		return projectShortName;
+	}
+
+	public void setProjectShortName(String projectShortName) {
+		this.projectShortName = projectShortName;
+	}
 
 	/**
 	 * Children files extension
@@ -159,7 +176,7 @@ public abstract class AbstractConfluenceMojo extends AbstractBaseConfluenceMojo 
 	 * @return
 	 */
 	protected final String getTitle() {
-		return title;
+		return title + " (" + getProjectShortName() +")";
 	}
 
 	/**
