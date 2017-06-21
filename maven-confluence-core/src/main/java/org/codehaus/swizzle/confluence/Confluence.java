@@ -1,9 +1,6 @@
 package org.codehaus.swizzle.confluence;
 
 import java.awt.Label;
-import org.apache.xmlrpc.client.XmlRpcClientConfigImpl;
-import org.apache.xmlrpc.client.XmlRpcClientException;
-
 import java.lang.reflect.Constructor;
 import java.net.MalformedURLException;
 import java.net.Proxy;
@@ -23,9 +20,12 @@ import org.apache.commons.httpclient.UsernamePasswordCredentials;
 import org.apache.commons.httpclient.auth.AuthScope;
 import org.apache.xmlrpc.XmlRpcException;
 import org.apache.xmlrpc.client.XmlRpcClient;
+import org.apache.xmlrpc.client.XmlRpcClientConfigImpl;
+import org.apache.xmlrpc.client.XmlRpcClientException;
 import org.apache.xmlrpc.client.XmlRpcCommonsTransportFactory;
 import org.bsc.confluence.ConfluenceProxy;
 import org.bsc.confluence.ConfluenceService;
+import org.parboiled.common.StringUtils;
 
 /**
  * @version $Revision$ $Date$
@@ -317,7 +317,11 @@ class Confluence {
      * version fields at a minimum. The parentId field is always optional. All other fields will be ignored.
      */
     public Page storePage(Page page) throws SwizzleException, ConfluenceException {
-        Map data = (Map) call(SERVICE_PREFIX_1, "storePage", new Object[] { page });
+    	String cmd = "storePage";
+    	if( StringUtils.isNotEmpty(page.getId())) {
+    		cmd = "updatePage";
+    	}
+        Map data = (Map) call(SERVICE_PREFIX_1, cmd, new Object[] { page });
         return new Page(data);
     }
 
@@ -921,7 +925,13 @@ class Confluence {
             vector = new Object[args.length + 1];
             vector[0] = token;
             System.arraycopy(args, 0, vector, 1, args.length);
-        } else {
+        } else if (command.equals("updatePage")) {
+            vector = new Object[args.length + 2];
+            vector[0] = token;
+            System.arraycopy(args, 0, vector, 1, args.length);
+            vector[1] = "{minorEdit=true}";
+        } 
+        else {
             vector = args;
         }
         try {
