@@ -5,6 +5,7 @@
  */
 package org.bsc.confluence;
 
+import java.io.File;
 import rx.functions.Action1;
 
 /**
@@ -116,6 +117,8 @@ public interface ConfluenceService {
                 void setComment( String comment );
 
                 java.util.Date getCreated();
+                
+                String getId();
         }            
 
         public interface PageSummary {
@@ -182,7 +185,7 @@ public interface ConfluenceService {
     
     Model.Attachment getAttachment( String pageId, String name, String version) throws Exception;
     
-    Model.Attachment addAttchment( Model.Page page, Model.Attachment attachment, java.io.InputStream source ) throws Exception ;
+    Model.Attachment addAttchment( Model.Page page, Model.Attachment attachment, File source ) throws Exception ;
 
     
 }

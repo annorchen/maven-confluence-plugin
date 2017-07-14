@@ -14,46 +14,44 @@ import org.bsc.confluence.ConfluenceService.Model;
  */
 public class Page implements Model.Page {
 
-    public final JsonObject data;
+	public final JsonObject data;
 
-    public Page(JsonObject delegate) {
-        if( delegate==null ) {
-            throw new IllegalArgumentException("delegate argument is null!");
-        } 
-        
-        this.data = delegate;
-    }
-    
-    
-    @Override
-    public String getId() {
-        
-        return data.getString("id");
-    }
+	public Page(JsonObject delegate) {
+		if (delegate == null) {
+			throw new IllegalArgumentException("delegate argument is null!");
+		}
+		this.data = delegate;
+	}
 
-    @Override
-    public String getTitle() {
-        return data.getString("title");
-    }
+	@Override
+	public String getId() {
 
-    @Override
-    public String getSpace() {
-        return data.getJsonObject("space").getString("key");
-    }
+		return data.getString("id");
+	}
 
-    @Override
-    public int getVersion() {
-        return data.getJsonObject("version").getInt("number", 0);
-    }
+	@Override
+	public String getTitle() {
+		return data.getString("title");
+	}
 
-    @Override
-    public String getParentId() {
-        return String.valueOf(data.getJsonObject("container").getInt("id"));
-    }
+	@Override
+	public String getSpace() {
+		return data.getJsonObject("space").getString("key");
+	}
 
-    @Override
-    public String toString() {
-        return data.toString();
-    }
-    
+	@Override
+	public int getVersion() {
+		return data.getJsonObject("version").getInt("number", 0);
+	}
+
+	@Override
+	public String getParentId() {
+		return String.valueOf(data.getJsonObject("container").getInt("id"));
+	}
+
+	@Override
+	public String toString() {
+		return data.toString();
+	}
+
 }

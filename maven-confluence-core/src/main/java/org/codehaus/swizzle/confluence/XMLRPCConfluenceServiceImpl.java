@@ -5,18 +5,19 @@
  */
 package org.codehaus.swizzle.confluence;
 
+import static java.lang.String.format;
 import java.io.BufferedInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
+import java.io.FileInputStream;
 import java.io.InputStream;
-import java.util.List;
-import org.bsc.confluence.ConfluenceService;
-import static java.lang.String.format;
 import java.net.MalformedURLException;
 import java.net.URISyntaxException;
 import java.util.Collections;
+import java.util.List;
 import javax.net.ssl.HttpsURLConnection;
 import org.bsc.confluence.ConfluenceProxy;
+import org.bsc.confluence.ConfluenceService;
 import org.bsc.confluence.ExportFormat;
 import org.bsc.ssl.SSLCertificateInfo;
 import rx.functions.Action1;
@@ -183,33 +184,42 @@ public class XMLRPCConfluenceServiceImpl implements ConfluenceService {
     }
 
     @Override
-    public Model.Attachment addAttchment(Model.Page page, Model.Attachment attachment, InputStream source) throws Exception {
-        final Page p = cast(page);
-        
-        if( p.getId() == null ) {
-            throw new IllegalStateException("PageId is null. Attachment cannot be added!");
-        }
-        
-        final Attachment a = cast(attachment);
-        
-        BufferedInputStream fis = new BufferedInputStream(source, 4096 );
-        ByteArrayOutputStream baos = new ByteArrayOutputStream( );
+	public Model.Attachment addAttchment(Model.Page page, Model.Attachment attachment, File source) throws Exception {
+		final Page p = cast(page);
 
-        byte [] readbuf = new byte[4096];
+		if (p.getId() == null) {
+			throw new IllegalStateException("PageId is null. Attachment cannot be added!");
+		}
 
-        int len;
+		final Attachment a = cast(attachment);
+		InputStream is = null;
+		BufferedInputStream fis = null;
+		ByteArrayOutputStream baos = new ByteArrayOutputStream();
+		try {
+			is = new FileInputStream(source);
+			fis = new BufferedInputStream(is, 4096);
 
-        while( (len=fis.read(readbuf))==readbuf.length ) {
-                baos.write(readbuf, 0, len);
-        }
-        if( len> 0 ) baos.write(readbuf, 0, len);
+			byte[] readbuf = new byte[4096];
 
-        a.setPageId( page.getId() );
+			int len;
 
-        return connection.addAttachment( new Long(page.getId()), a, baos.toByteArray() );     
-        
-    }
+			while ((len = fis.read(readbuf)) == readbuf.length) {
+				baos.write(readbuf, 0, len);
+			}
+			if (len > 0)
+				baos.write(readbuf, 0, len);
 
+			a.setPageId(page.getId());
+		} finally {
+			if (is != null) {
+				is.close();
+			}
+			if (fis != null) {
+				fis.close();
+			}
+		}
+		return connection.addAttachment(new Long(page.getId()), a, baos.toByteArray());
+	}
 
     @Override
     public Model.Page storePage(Model.Page page) throws Exception {
@@ -342,5 +352,5 @@ public class XMLRPCConfluenceServiceImpl implements ConfluenceService {
                                 outputFile);
 
     }
-    
+
 }

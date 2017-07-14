@@ -113,18 +113,14 @@ public abstract class AbstractConfluenceSiteMojo extends AbstractConfluenceMojo 
             }
 
             confluenceAttachment.setComment( attachment.getComment());
-            
-            try( java.io.InputStream is = attachment.getUri().toURL().openStream()) {
-                confluence.addAttchment(confluencePage, confluenceAttachment, is );
+            try {
+            	File attachmentFile = new File(attachment.getUri().getPath());
+                confluence.addAttchment(confluencePage, confluenceAttachment, attachmentFile);
             } catch (Exception e) {
                 final String msg = format("Error uploading attachment [%s] ", attachment.getName());
-                //getLog().error(msg);
                 throw new RuntimeException(msg,e);
-
             }
-
         }
-
     }
     
     

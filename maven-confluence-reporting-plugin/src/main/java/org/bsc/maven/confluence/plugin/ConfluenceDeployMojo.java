@@ -310,7 +310,7 @@ public class ConfluenceDeployMojo extends AbstractConfluenceSiteMojo {
         try {
         	final String baseDir = (new File(site.getHome().getUri().getPath())).getParent();
         	
-            return Site.processUri(site.getHome().getUri(), this.getTitle(), new Func2<InputStream, Representation, String>() {
+            return Site.processUri(baseDir, getCharset(),site.getHome().getUri(), this.getTitle(), new Func2<InputStream, Representation, String>() {
                 @Override
                 public String call(InputStream is, Representation r) {
                     try {
@@ -318,6 +318,7 @@ public class ConfluenceDeployMojo extends AbstractConfluenceSiteMojo {
                                 .setSkipUndefinedVars(true)
                                 .build(baseDir, is, getCharset() );
 
+                        
                         generateProjectHomeTemplate( t, site, locale );
 
                         return t.generateOutput();
@@ -849,7 +850,7 @@ public class ConfluenceDeployMojo extends AbstractConfluenceSiteMojo {
         getProperties().put("artifactId",   getProject().getArtifactId());
         getProperties().put("version",      getProject().getVersion());
         final String baseDir = (new File(site.getHome().getUri().getPath())).getParent();
-        return Site.processUri(site.getHome().getUri(), getTitle(), new Func2<java.io.InputStream,Storage.Representation,Model.Page>() {
+        return Site.processUri(baseDir, getCharset(), site.getHome().getUri(), getTitle(), new Func2<java.io.InputStream,Storage.Representation,Model.Page>() {
 
             @Override
             public Model.Page call( java.io.InputStream is ,Storage.Representation sr) {

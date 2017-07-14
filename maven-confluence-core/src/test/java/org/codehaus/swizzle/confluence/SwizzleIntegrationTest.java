@@ -5,20 +5,19 @@
 
 package org.codehaus.swizzle.confluence;
 
+import static org.hamcrest.core.IsNull.notNullValue;
+import static org.junit.Assert.assertThat;
+import java.io.File;
 import org.bsc.confluence.ConfluenceProxy;
 import org.bsc.confluence.ConfluenceService;
 import org.bsc.confluence.ConfluenceService.Model;
 import org.bsc.ssl.SSLCertificateInfo;
 import org.hamcrest.core.IsInstanceOf;
-import org.junit.Ignore;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
+import org.junit.Ignore;
 import org.junit.Test;
-
-
-import static org.junit.Assert.*;
-import static org.hamcrest.core.IsNull.*;
 /**
  *
  * @author bsorrentino
@@ -79,14 +78,14 @@ public class SwizzleIntegrationTest {
         a.setContentType( "image/jpg" );
 
 
-        java.io.InputStream is = getClass().getClassLoader().getResourceAsStream("foto2.jpg");
+        File file = new File(getClass().getClassLoader().getResource("foto2.jpg").getPath());
 
         page = confluence.storePage(page);
         
         Assert.assertThat( page, notNullValue() );
         Assert.assertThat( page.getId(), notNullValue() );
         
-        confluence.addAttchment(page, a, is);
+        confluence.addAttchment(page, a, file);
 
     }
 

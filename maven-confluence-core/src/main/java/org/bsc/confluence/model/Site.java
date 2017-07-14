@@ -7,20 +7,22 @@ package org.bsc.confluence.model;
 import java.io.File;
 import java.io.IOException;
 import java.io.PrintStream;
+import java.nio.charset.Charset;
 import java.util.ArrayList;
 import java.util.List;
-import javax.xml.bind.annotation.*;
-
+import javax.xml.bind.annotation.XmlAccessType;
+import javax.xml.bind.annotation.XmlAccessorType;
 import javax.xml.bind.annotation.XmlAttribute;
 import javax.xml.bind.annotation.XmlElement;
 import javax.xml.bind.annotation.XmlRootElement;
 import javax.xml.bind.annotation.XmlTransient;
-import org.apache.commons.io.IOUtils;
+import javax.xml.bind.annotation.XmlType;
 import org.bsc.confluence.ConfluenceService.Storage;
 import org.bsc.markdown.ToConfluenceSerializer;
 import org.pegdown.PegDownProcessor;
 import org.pegdown.ast.Node;
 import org.pegdown.ast.RootNode;
+import biz.source_code.miniTemplator.MiniTemplator;
 import rx.functions.Func2;
 //import org.slf4j.Logger;  
 //import org.slf4j.LoggerFactory;
@@ -46,9 +48,13 @@ public class Site {
      * @param is
      * @return 
      */
-    static java.io.InputStream processMarkdown( final java.io.InputStream is, final String homePageTitle ) throws IOException {
+    static java.io.InputStream processMarkdown(String baseDir, Charset charSet, final java.io.InputStream is, final String homePageTitle ) throws IOException {
         
-        final char[] contents = IOUtils.toCharArray(is);
+    	MiniTemplator t = new MiniTemplator.Builder()
+                .setSkipUndefinedVars(true)
+                .build(baseDir, is, charSet );
+    	
+        final char[] contents = t.generateOutput().toCharArray();
         
         final PegDownProcessor p = new PegDownProcessor(ToConfluenceSerializer.extensions());
         
@@ -85,7 +91,8 @@ public class Site {
      * @return
      * @throws Exception
      */
-    public static <T> T processUri(
+    public static <T> T processUri(final String baseDir,
+    							final Charset charSet, 
                                 final java.net.URI uri,
                                 final String homePageTitle,
                                 final Func2<java.io.InputStream,Storage.Representation,T> onSuccess ) throws /*ProcessUri*/Exception
@@ -124,7 +131,7 @@ public class Site {
 
                     final java.io.InputStream is = cl.getResourceAsStream(source);
                     
-                    result = (isMarkdown) ? processMarkdown(is, homePageTitle) : is;
+                    result = (isMarkdown) ? processMarkdown(baseDir, charSet, is, homePageTitle) : is;
 
                     if (result == null) {
                         throw new Exception(String.format("resource [%s] doesn't exist in classloader", source));
@@ -139,7 +146,7 @@ public class Site {
 
                     final java.io.InputStream is = url.openStream();
 
-                    result =  (isMarkdown) ? processMarkdown(is, homePageTitle) : is;
+                    result =  (isMarkdown) ? processMarkdown(baseDir, charSet, is, homePageTitle) : is;
 
                 } catch (IOException e) {
                     throw new Exception(String.format("error opening url [%s]!", source), e);

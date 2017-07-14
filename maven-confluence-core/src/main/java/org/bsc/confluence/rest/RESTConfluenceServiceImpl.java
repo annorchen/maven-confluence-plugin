@@ -5,9 +5,9 @@
  */
 package org.bsc.confluence.rest;
 
+import static java.lang.String.format;
 import java.io.File;
 import java.io.IOException;
-import java.io.InputStream;
 import java.io.Reader;
 import java.net.MalformedURLException;
 import java.util.List;
@@ -15,25 +15,26 @@ import java.util.concurrent.TimeUnit;
 import javax.json.Json;
 import javax.json.JsonArray;
 import javax.json.JsonObject;
+import javax.json.JsonObjectBuilder;
 import javax.json.JsonReader;
-import okhttp3.HttpUrl;
-import okhttp3.OkHttpClient;
-import okhttp3.Request;
-import okhttp3.Response;
-import okhttp3.ResponseBody;
 import org.bsc.confluence.ConfluenceService;
 import org.bsc.confluence.ExportFormat;
+import org.bsc.confluence.rest.model.Attachment;
+import org.bsc.confluence.rest.model.Page;
+import org.bsc.ssl.SSLCertificateInfo;
+import okhttp3.HttpUrl;
+import okhttp3.MediaType;
+import okhttp3.MultipartBody;
+import okhttp3.OkHttpClient;
+import okhttp3.Request;
+import okhttp3.Request.Builder;
+import okhttp3.RequestBody;
+import okhttp3.Response;
+import okhttp3.ResponseBody;
 import rx.Observable;
 import rx.Subscriber;
-import rx.functions.Func1;
-
-import okhttp3.MediaType;
-import okhttp3.RequestBody;
-import org.bsc.confluence.rest.model.Page;
-import javax.json.JsonObjectBuilder;
-import static java.lang.String.format;
-import org.bsc.ssl.SSLCertificateInfo;
 import rx.functions.Action1;
+import rx.functions.Func1;
 
 /**
  * @see https://docs.atlassian.com/confluence/REST/latest/
@@ -43,43 +44,42 @@ import rx.functions.Action1;
 public class RESTConfluenceServiceImpl implements ConfluenceService {
     
     final Credentials credentials;
+    final String credential;
     final OkHttpClient.Builder client = new OkHttpClient.Builder();
     final java.net.URL endpoint ;
     
-    public RESTConfluenceServiceImpl( String url , Credentials credentials, SSLCertificateInfo sslInfo) {
-        if( credentials==null ) {
-            throw new IllegalArgumentException("credentials argument is null!");
-        } 
-        if( url==null ) {
-            throw new IllegalArgumentException("url argument is null!");
-        } 
-        if( sslInfo==null ) {
-            throw new IllegalArgumentException("sslInfo argument is null!");
-        } 
-        
-        try {
-            this.endpoint = new java.net.URL(url);
-            
-        } catch (MalformedURLException ex) {
-            throw new IllegalArgumentException("url argument is not valid!", ex);
-        }
-        
+	public RESTConfluenceServiceImpl(String url, Credentials credentials, SSLCertificateInfo sslInfo) {
+		if (credentials == null) {
+			throw new IllegalArgumentException("credentials argument is null!");
+		}
+		if (url == null) {
+			throw new IllegalArgumentException("url argument is null!");
+		}
+		if (sslInfo == null) {
+			throw new IllegalArgumentException("sslInfo argument is null!");
+		}
 
-        this.credentials = credentials;
-        
-        client.connectTimeout(10, TimeUnit.SECONDS);
-        client.writeTimeout(10, TimeUnit.SECONDS);
-        client.readTimeout(30, TimeUnit.SECONDS);
-        
-        if( !sslInfo.isIgnore() && "https".equals(this.endpoint.getProtocol()) ) {
-                    
-            client.hostnameVerifier(sslInfo.getHostnameVerifier())
-                    .sslSocketFactory(sslInfo.getSSLSocketFactory(), sslInfo.getTrustManager())
-                    
-                 ;
-        }
-        
-    }
+		try {
+			this.endpoint = new java.net.URL(url);
+
+		} catch (MalformedURLException ex) {
+			throw new IllegalArgumentException("url argument is not valid!", ex);
+		}
+
+		this.credentials = credentials;
+		this.credential = okhttp3.Credentials.basic(credentials.username, credentials.password);
+
+		client.connectTimeout(10, TimeUnit.SECONDS);
+		client.writeTimeout(10, TimeUnit.SECONDS);
+		client.readTimeout(30, TimeUnit.SECONDS);
+
+		if (!sslInfo.isIgnore() && "https".equals(this.endpoint.getProtocol())) {
+
+			client.hostnameVerifier(sslInfo.getHostnameVerifier()).sslSocketFactory(sslInfo.getSSLSocketFactory(), sslInfo.getTrustManager())
+
+			;
+		}
+	}
     
     private HttpUrl.Builder urlBuilder() {
         
@@ -98,38 +98,28 @@ public class RESTConfluenceServiceImpl implements ConfluenceService {
     }
     
     private Observable<Response> rxfindPagesResponse( final String spaceKey, final String title ) {
-
-        final String credential = 
-                okhttp3.Credentials.basic(credentials.username, credentials.password);
-
-        
-        final HttpUrl url =  urlBuilder()
-                                    .addPathSegment("content")                
-                                    .addQueryParameter("spaceKey", spaceKey)
-                                    .addQueryParameter("title", title)
-                                    .addQueryParameter("expand", "space,version,container")
-                                    .build();
         final Request req = new Request.Builder()
                 .header("Authorization", credential)
-                .url( url )  
+                .url(urlBuilder()
+                        .addPathSegment("content")                
+                        .addQueryParameter("spaceKey", spaceKey)
+                        .addQueryParameter("title", title)
+                        .addQueryParameter("expand", "space,version,container")
+                        .build())  
                 .get()
                 .build();
 
         return rx.Observable.create( new Observable.OnSubscribe<Response>() {
             @Override
             public void call(Subscriber<? super Response> t) {
-
                 try {
                     final Response res = client.build().newCall(req).execute();
-
                     t.onNext(res);
                     t.onCompleted();                        
                                         
                 } catch (IOException ex) {
-                    
                     t.onError(ex);
                 }
-                
             }
         });
         
@@ -166,10 +156,7 @@ public class RESTConfluenceServiceImpl implements ConfluenceService {
                             
                             return Observable.error(ex);
                         }
-                                    
-   
                     }
-            
         });
         
     }
@@ -189,8 +176,6 @@ public class RESTConfluenceServiceImpl implements ConfluenceService {
                 }
                 return Observable.error( new Exception( format("results contains more than one element [%d]", t.size()) ));
             }
-        
-            
         });
     }
     
@@ -213,14 +198,10 @@ public class RESTConfluenceServiceImpl implements ConfluenceService {
                 .add("body", Json.createObjectBuilder()
                                 .add("storage", Json.createObjectBuilder()
                                                 .add("representation",storage.rapresentation.toString())
-                                                .add("value",storage.value)))
-                ;
+                                                .add("value",storage.value)));
     }
-
     
     public Observable<JsonObject> rxCreatePage( final JsonObject inputData ) {
-        final String credential = 
-                okhttp3.Credentials.basic(credentials.username, credentials.password);
 
         final MediaType storageFormat = MediaType.parse("application/json");
         
@@ -233,43 +214,10 @@ public class RESTConfluenceServiceImpl implements ConfluenceService {
                 .post(inputBody)
                 .build();
         
-        return rx.Observable.create( new Observable.OnSubscribe<JsonObject>() {
-            @Override
-            public void call(Subscriber<? super JsonObject> t) {
-
-                try {
-                    final Response res = client.build().newCall(req).execute();
-                    
-                    if( !res.isSuccessful() ) {
-                        t.onError( new Exception( format("error creating page\n%s", res.toString()) ));
-                        return;
-                    }
-
-                    final ResponseBody body = res.body();
-
-                    try( Reader r = body.charStream()) {
-            
-                        final JsonReader rdr = Json.createReader(r);
-
-                        final JsonObject root = rdr.readObject();
-                        
-                        t.onNext(root);
-                        t.onCompleted();
-                    }
-                    
-                                        
-                } catch (IOException ex) {
-                    
-                    t.onError(ex);
-                }
-                
-            }
-        });        
+        return restCall(req, "error creating page");  
     }
     
     public Observable<JsonObject> rxUpdatePage( final String pageId, final JsonObject inputData ) {
-        final String credential = 
-                okhttp3.Credentials.basic(credentials.username, credentials.password);
 
         final MediaType storageFormat = MediaType.parse("application/json");
         
@@ -284,39 +232,7 @@ public class RESTConfluenceServiceImpl implements ConfluenceService {
                         .build() )  
                 .put(inputBody)
                 .build();
-        
-        return rx.Observable.create( new Observable.OnSubscribe<JsonObject>() {
-            @Override
-            public void call(Subscriber<? super JsonObject> t) {
-
-                try {
-                    final Response res = client.build().newCall(req).execute();
-                    
-                    if( !res.isSuccessful() ) {
-                        t.onError( new Exception( format("error updating page\n%s", res.toString()) ));
-                        return;
-                    }
-
-                    final ResponseBody body = res.body();
-
-                    try( Reader r = body.charStream()) {
-            
-                        final JsonReader rdr = Json.createReader(r);
-
-                        final JsonObject root = rdr.readObject();
-                        
-                        t.onNext(root);
-                        t.onCompleted();
-                    }
-                    
-                                        
-                } catch (IOException ex) {
-                    
-                    t.onError(ex);
-                }
-                
-            }
-        });        
+        return restCall(req, "error updating page");  
     }
 
     @Override
@@ -399,7 +315,7 @@ public class RESTConfluenceServiceImpl implements ConfluenceService {
         int previousVersion = page.getVersion();
         
         final JsonObject input = Json.createObjectBuilder()
-                .add("version", Json.createObjectBuilder().add("number", ++previousVersion))
+                .add("version", Json.createObjectBuilder().add("number", ++previousVersion).add("minorEdit", true))
                 .add("id",page.getId())
                 .add("type","page")
                 .add("title",page.getTitle())
@@ -408,19 +324,16 @@ public class RESTConfluenceServiceImpl implements ConfluenceService {
                                 .add("storage", Json.createObjectBuilder()
                                                 .add("representation",content.rapresentation.toString())
                                                 .add("value",content.value)))
-                .build()
-                ;        
+                .build();        
         
         final JsonObject result = rxUpdatePage(page.getId(),input)
                                     .toBlocking()
                                     .first();
-        
         return new Page(result);
     }
 
     @Override
     public Model.Page storePage(Model.Page page) throws Exception {
-        
         return page;
     }
 
@@ -446,12 +359,91 @@ public class RESTConfluenceServiceImpl implements ConfluenceService {
 
     @Override
     public Model.Attachment getAttachment(String pageId, String name, String version) throws Exception {
-        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+    	
+        final Request req = new Request.Builder()
+                .header("Authorization", credential)
+                .url( urlBuilder()
+                        .addPathSegment("content")
+                        .addPathSegment(pageId)
+                        .addPathSegment("child")
+                        .addPathSegment("attachment")
+                        .addQueryParameter("filename", name)
+                        .build() )  
+                .build();
+        
+        Observable<JsonObject> result = restCall(req, "error getAttachment");     
+        return new Attachment(result.toBlocking().first());  
     }
 
+
     @Override
-    public Model.Attachment addAttchment(Model.Page page, Model.Attachment attachment, InputStream source) throws Exception {
-        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+    public Model.Attachment addAttchment(Model.Page page, Model.Attachment attachment, File source) throws Exception {
+    	
+    	
+		final MediaType MEDIA_TYPE = MediaType.parse("multipart/form-data");
+
+		MultipartBody.Builder multipartBuilder = new MultipartBody.Builder()
+                .setType(MultipartBody.FORM);
+        multipartBuilder.addFormDataPart("file", source.getName(), RequestBody.create(MEDIA_TYPE, source));
+        multipartBuilder.addFormDataPart("minorEdit", "true");
+        Builder builder = new Request.Builder()
+        .addHeader("Authorization", credential)
+        .addHeader("X-Atlassian-Token", "no-check");
+        
+        if(attachment.getId() !=null) {
+        	//update
+        	builder.url( urlBuilder()
+        			.addPathSegment("content")
+        			.addPathSegment(page.getId())
+        			.addPathSegment("child")
+        			.addPathSegment("attachment")
+        			.addPathSegment(attachment.getId())
+        			.addPathSegment("data")
+        			.build() );
+        } else {
+        	builder.url( urlBuilder()
+                		.addPathSegment("content")
+                		.addPathSegment(page.getId())
+                        .addPathSegment("child")
+                        .addPathSegment("attachment")
+                		.build() );
+        }
+        final Request req = builder.post(multipartBuilder.build()).build();
+        
+        Observable<JsonObject> result = restCall(req, "error add attchment");
+        
+        return new Attachment(result.toBlocking().first());  
     }
+    
+	private Observable<JsonObject> restCall(final Request req, final String errorMsg) {
+		return rx.Observable.create(new Observable.OnSubscribe<JsonObject>() {
+			@Override
+			public void call(Subscriber<? super JsonObject> t) {
+
+				try {
+					final Response res = client.build().newCall(req).execute();
+
+					if (!res.isSuccessful()) {
+						t.onError(new Exception(format(errorMsg + "\n%s", res.toString())));
+						return;
+					}
+					final ResponseBody body = res.body();
+
+					try (Reader r = body.charStream()) {
+
+						final JsonReader rdr = Json.createReader(r);
+
+						final JsonObject root = rdr.readObject();
+
+						t.onNext(root);
+						t.onCompleted();
+					}
+				} catch (IOException ex) {
+
+					t.onError(ex);
+				}
+			}
+		});
+	}
 
 }

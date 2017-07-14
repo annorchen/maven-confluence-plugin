@@ -325,7 +325,7 @@ public abstract class AbstractConfluenceMojo extends AbstractBaseConfluenceMojo 
 
 				final String baseDir = source.getPath();
 				
-				result = Site.processUri(source, this.getTitle(), new Func2<InputStream, Storage.Representation, Model.Page>() {
+				result = Site.processUri(baseDir, getCharset(), source, this.getTitle(), new Func2<InputStream, Storage.Representation, Model.Page>() {
 					@Override
 					public Model.Page call(InputStream is, Representation r) {
 
@@ -420,7 +420,8 @@ public abstract class AbstractConfluenceMojo extends AbstractBaseConfluenceMojo 
 	private String processUri(java.net.URI uri, final Charset charset) throws ProcessUriException {
 
 		try {
-			return Site.processUri(uri, this.getTitle(), new Func2<InputStream, Representation, String>() {
+			final String baseDir = (new File(uri.getPath())).getParent();
+			return Site.processUri( baseDir, charset, uri, this.getTitle(), new Func2<InputStream, Representation, String>() {
 				@Override
 				public String call(InputStream is, Representation r) {
 					try {

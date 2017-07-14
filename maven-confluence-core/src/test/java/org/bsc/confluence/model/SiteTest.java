@@ -1,24 +1,24 @@
 package org.bsc.confluence.model;
 
-import org.bsc.confluence.model.Site;
-import org.apache.commons.io.IOUtils;
-import org.junit.Test;
-
+import static org.hamcrest.CoreMatchers.not;
+import static org.junit.Assert.assertThat;
+import static org.junit.matchers.JUnitMatchers.containsString;
+import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
-
-import static org.hamcrest.CoreMatchers.not;
+import java.nio.charset.StandardCharsets;
+import org.apache.commons.io.IOUtils;
 import org.hamcrest.core.IsNull;
-import static org.junit.Assert.*;
-import static org.junit.matchers.JUnitMatchers.containsString;
+import org.junit.Test;
 
 public class SiteTest {
 
     @Test
     public void shouldSupportReferenceNode() throws IOException {
+    	String baseDir = new File(getClass().getClassLoader().getSystemResource("withRefLink.md").getPath()).getParent();
         final InputStream stream = getClass().getClassLoader().getResourceAsStream("withRefLink.md");
         assertThat( stream, IsNull.notNullValue());
-        final InputStream inputStream = Site.processMarkdown(stream, "Test");
+        final InputStream inputStream = Site.processMarkdown(baseDir, StandardCharsets.UTF_8, stream, "Test");
         assertThat( inputStream, IsNull.notNullValue());
         final String converted = IOUtils.toString(inputStream);
 
@@ -29,9 +29,10 @@ public class SiteTest {
 
     @Test
     public void shouldSupportImgRefLink() throws IOException {
+    	String baseDir = new File(getClass().getClassLoader().getSystemResource("withImgRefLink.md").getPath()).getParent();
         final InputStream stream = getClass().getClassLoader().getResourceAsStream("withImgRefLink.md");
         assertThat( stream, IsNull.notNullValue());
-        final InputStream inputStream = Site.processMarkdown(stream, "Test IMG");
+        final InputStream inputStream = Site.processMarkdown(baseDir, StandardCharsets.UTF_8, stream, "Test IMG");
         assertThat( inputStream, IsNull.notNullValue());
         final String converted = IOUtils.toString(inputStream);
 
@@ -46,9 +47,10 @@ public class SiteTest {
 
     @Test
     public void shouldSupportSimpleNode() throws IOException {
+    	String baseDir = new File(getClass().getClassLoader().getSystemResource("simpleNodes.md").getPath()).getParent();
         final InputStream stream = getClass().getClassLoader().getResourceAsStream("simpleNodes.md");
         assertThat( stream, IsNull.notNullValue());
-        final InputStream inputStream = Site.processMarkdown(stream, "Test");
+        final InputStream inputStream = Site.processMarkdown(baseDir, StandardCharsets.UTF_8, stream, "Test");
         assertThat( inputStream, IsNull.notNullValue());
         final String converted = IOUtils.toString(inputStream);
 
@@ -64,9 +66,10 @@ public class SiteTest {
     
     @Test
     public void shouldCreateSpecificNoticeBlock() throws IOException {
+    	String baseDir = new File(getClass().getClassLoader().getSystemResource("createSpecificNoticeBlock.md").getPath()).getParent();
         final InputStream stream = getClass().getClassLoader().getResourceAsStream("createSpecificNoticeBlock.md");
         assertThat( stream, IsNull.notNullValue());
-        final InputStream inputStream = Site.processMarkdown(stream, "Test Macro");
+        final InputStream inputStream = Site.processMarkdown(baseDir, StandardCharsets.UTF_8, stream, "Test Macro");
         assertThat( inputStream, IsNull.notNullValue());
         final String converted = IOUtils.toString(inputStream);
 
