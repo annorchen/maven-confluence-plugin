@@ -63,7 +63,7 @@
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-plugin-plugin</artifactId>
-                <version>3.4</version>
+                <version>${pluginToolsVersion}</version>
                 <configuration>
                     <goalPrefix>hello</goalPrefix>
                     <skipErrorNoDescriptorsFound>true</skipErrorNoDescriptorsFound>
@@ -98,7 +98,7 @@
                     <dependency>
                         <groupId>org.apache.maven.plugins</groupId>
                         <artifactId>maven-plugin-plugin</artifactId>
-                        <version>3.4</version>
+                        <version>${pluginToolsVersion}</version>
                     </dependency>
                 </dependencies>
             </plugin>

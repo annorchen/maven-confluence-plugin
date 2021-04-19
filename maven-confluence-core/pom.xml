@@ -4,7 +4,7 @@
     <parent>
         <artifactId>maven-confluence-parent</artifactId>
         <groupId>org.bsc.maven</groupId>
-        <version>5.0-bdal-1</version>
+        <version>5.0-bdal-2</version>
     </parent>
 
     <modelVersion>4.0.0</modelVersion>
@@ -120,7 +120,15 @@
             <groupId>io.reactivex</groupId>
             <artifactId>rxjava</artifactId>
         </dependency>
-
+		<dependency>
+		  <groupId>jakarta.xml.bind</groupId>
+		  <artifactId>jakarta.xml.bind-api</artifactId>
+		</dependency>
+		<dependency>
+		  <groupId>com.sun.xml.bind</groupId>
+		  <artifactId>jaxb-impl</artifactId>
+		  <scope>runtime</scope>
+		</dependency>
     </dependencies>
 
 
@@ -157,7 +165,7 @@
                 </executions>
 
             </plugin>
-            
+
             <!--
             ===================================
             JAXB SCHEMA GENERATION
@@ -175,16 +183,16 @@
                         <source>src/main/java/org/bsc/confluence/model/package-info.java</source>
                     </sources>
                     <outputDirectory>${project.build.directory}/schemas</outputDirectory>
-                    
+
                     <!-- Post-processing 2: Transform the generated XML Schemas.-->
                     <transformSchemas>
                         <transformSchema>
                             <uri>https://github.com/bsorrentino/maven-confluence-plugin</uri>
                             <toPrefix>bsc</toPrefix>
                             <toFile>site-schema-${project.version}.xsd</toFile>
-                        </transformSchema>  
-                    </transformSchemas>    
-          
+                        </transformSchema>
+                    </transformSchemas>
+
                 </configuration>
             </plugin>
 
